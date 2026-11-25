@@ -1,48 +1,89 @@
-# AI 网文写作助手（ai-novel-studio）
+# ai-novel-studio · AI 网文写作助手
 
-本地 + 公网可访问的 AI 辅助网文写作工具。前端 Vite+Vue3+Element Plus，后端 FastAPI+SQLite，AI 接 DeepSeek。
+一个本地运行、可公网安全访问的 **AI 辅助网文写作工具**。把「灵感构思 → 大纲 → 逐章写作 → 一致性维护 → 导出」串成完整闭环。
 
-## 外网访问（已配置完成）
+技术栈：**FastAPI + SQLite** / **Vue3 + Element Plus + Vite** / **DeepSeek（OpenAI 兼容，可切方舟或自定义）**。
 
-- **公网地址**：https://novel.invokerz.xyz （Cloudflare Tunnel + Access 邮箱登录墙）
-- 其他浏览器/设备访问会先跳登录墙，用你设的邮箱收一次性验证码后进入。
-- 若嫌每次输邮箱，改 Access → Applications → Policy → Additional settings → **Session duration** 调长（如 30 天）。
+## ✨ 特性
 
-## 本地访问
+- **灵感建书**：随机 / 关键词 / 番茄榜单趋势 → AI 给出书名、简介、世界观
+- **AI 生成卷章结构**：一键生成多卷多章（含章纲），落库即可开写
+- **流式续写**：打字机效果，可随时中断
+- **按章纲扩写**：由章纲扩写成章，自动生成章节摘要
+- **大纲多轮对话**：可追问细化剧情走向
+- **人物管理**：AI 生成人设卡并自动落字段
+- **长文一致性**：自动注入上文摘要 + 一键校验设定/人物冲突
+- **风格卡**：每本设文风，统一全书 AI 生成风格
+- **卷章管理**：分卷、章节移卷
+- **导出**：TXT / Markdown / DOCX / PDF
+- **移动端适配**：手机上也能顺畅写作
+- **可公网部署**：搭配 Cloudflare Tunnel + Access 登录墙，随时随地访问
 
-浏览器打开 http://127.0.0.1:5173
+## 🚀 快速开始
 
-## 端口
+### 环境要求
+- Python 3.10+
+- Node.js 18+
 
-| 服务 | 端口 | 说明 |
-|---|---|---|
-| 前端 Vite | **5173** | 唯一要访问的端口 |
-| 后端 FastAPI | **8778** | 前端 /api 代理到它，内部用 |
-- 后端端口可用环境变量 `NOVEL_BACKEND_PORT` 覆盖（前端代理会同步）。
+### 1) 启动后端
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --host 127.0.0.1 --port 8778
+```
 
-## 开机自启（已配好 3 个登录自启任务）
+### 2) 启动前端
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-| 任务名 | 作用 |
-|---|---|
-| `cloudflared-novel-writer` | 登录后自动拉起 Cloudflare 隧道 |
-| `novel-studio-services` | 登录后自动拉起前后端（`backend\boot_studio.ps1`，幂等） |
+### 3) 打开
+浏览器访问 **http://127.0.0.1:5173**
 
-> 电脑重启后登录进桌面，等约 10 秒，隧道 + 前后端会自动起来，外网自动恢复可访问。
+### 4) 配置 AI Key
+两种方式（任选其一）：
+- 打开应用的 **设置** 页填写服务商与 API Key（保存到本地 `data/settings.json`）
+- 或复制 `.env.example` 为 `.env` / 设置环境变量（见下）
 
-## 手动启动（需要时可单独跑）
+```bash
+NOVEL_AI_PROVIDER=deepseek          # deepseek | ark | custom
+NOVEL_AI_API_KEY=your_api_key
+# 可选
+# NOVEL_AI_BASE_URL=https://api.deepseek.com
+# NOVEL_AI_MODEL=deepseek-chat
+# NOVEL_BACKEND_PORT=8778
+```
 
-- 后端：`backend\run_backend.ps1`（自动注入 DeepSeek key）
-- 前端：在 `frontend\` 跑 `npm run dev`
-- 隧道：`cloudflared tunnel run --token <token>`（计划任务已管自启，一般不用手跑）
+> 优先级：设置页（`data/settings.json`）> 环境变量 > 内置默认。
 
-## 配置要点（勿忘）
+## 📁 项目结构
 
-- DeepSeek 密钥通过 `backend\boot_studio.ps1` / `run_backend.ps1` 从 `~/.cc-connect\config.toml` 注入，不落盘、不打印。
-- 切换 AI：设 `NOVEL_AI_PROVIDER=ark|deepseek` + 对应 `NOVEL_AI_API_KEY`。
-- 数据在 `data\novel.db`（SQLite）。
-- Vite 允许了 `novel.invokerz.xyz` Host（`frontend\vite.config.js` 的 `server.allowedHosts`），改域名要同步。
+```
+backend/app/
+  main.py            FastAPI 入口
+  db.py              SQLite 连接/建表/迁移
+  settings_store.py  设置持久化
+  export.py          导出 TXT/MD/DOCX/PDF
+  fanqie.py          番茄榜单元数据抓取（弱文本）
+  ai/client.py       AI 调用封装（支持流式、多 provider）
+  ai/prompts.py      各功能 prompt 模板
+  routers/           works / ai / settings 路由
+frontend/src/
+  views/             Workspace / Characters / Settings
+  components/        ChapterTree / OutlinePanel
+  router/ api/       路由与 Axios 封装
+data/                运行数据（SQLite 与设置，已在 .gitignore）
+```
 
-## 里程碑
+## 🌐 可选：公网访问
 
-- ✅ MVP 骨架：建作品/章节/自动保存/AI续写/大纲/扩写
-- ⏳ 待做：大纲交互面板、人物管理页、导出 TXT/MD/DOCX、素材库(V2)、一键上传(后置)
+推荐用 [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)：
+1. `cloudflared` 把 `localhost:5173` 暴露为你的域名
+2. 在 Cloudflare Zero Trust 加 **Access** 邮箱登录墙，避免裸奔
+3. 记得把域名加入 `frontend/vite.config.js` 的 `server.allowedHosts`
+
+## 📄 License
+
+[MIT](LICENSE)
