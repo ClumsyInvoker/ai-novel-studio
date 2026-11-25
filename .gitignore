@@ -1,0 +1,17 @@
+# 数据与密钥（含 API Key / 作品库，绝不入库）
+data/
+*.sqlite
+*.sqlite3
+*.db
+
+# 依赖与构建
+node_modules/
+dist/
+__pycache__/
+*.pyc
+.env
+*.log
+
+# 本地设置
+backend/.ruff_cache/
+.venv/
