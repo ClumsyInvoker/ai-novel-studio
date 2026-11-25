@@ -15,3 +15,9 @@ __pycache__/
 # 本地设置
 backend/.ruff_cache/
 .venv/
+# 个人部署/说明（不随开源发布，本地保留）
+GUIDE.md
+GUIDE.docx
+CLAUDE.md
+backend/run_backend.ps1
+backend/boot_studio.ps1
